@@ -168,7 +168,7 @@ pub fn variant_get_array_values<T>(
 /// - **List** scalars treat each element as a single field name
 ///   (e.g. `['a.b', 'c']` → path `[a.b, c]`), which is critical for keys that
 ///   contain dots such as OTEL attribute keys like `http.response.status_code`.
-fn path_from_scalar(scalar: &ScalarValue) -> Result<VariantPath<'static>> {
+pub(crate) fn path_from_scalar(scalar: &ScalarValue) -> Result<VariantPath<'static>> {
     match scalar {
         ScalarValue::Utf8(Some(s))
         | ScalarValue::Utf8View(Some(s))
