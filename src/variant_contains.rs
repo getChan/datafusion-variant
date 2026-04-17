@@ -26,10 +26,7 @@ impl Default for VariantContainsUdf {
     }
 }
 
-fn variant_contains(
-    variant: Option<&Variant<'_, '_>>,
-    path: &VariantPath<'_>,
-) -> Option<bool> {
+fn variant_contains(variant: Option<&Variant<'_, '_>>, path: &VariantPath<'_>) -> Option<bool> {
     variant.map(|value| value.get_path(path).is_some())
 }
 
@@ -77,7 +74,7 @@ impl ScalarUDFImpl for VariantContainsUdf {
                     .collect::<Vec<_>>();
 
                 Ok(ColumnarValue::Array(
-                    Arc::new(BooleanArray::from(values)) as ArrayRef,
+                    Arc::new(BooleanArray::from(values)) as ArrayRef
                 ))
             }
             (ColumnarValue::Scalar(scalar_variant), ColumnarValue::Scalar(path_scalar)) => {
@@ -118,7 +115,9 @@ impl ScalarUDFImpl for VariantContainsUdf {
                     })
                     .collect::<Result<Vec<_>>>()?;
 
-                Ok(ColumnarValue::Array(Arc::new(BooleanArray::from(values)) as ArrayRef))
+                Ok(ColumnarValue::Array(
+                    Arc::new(BooleanArray::from(values)) as ArrayRef
+                ))
             }
             (ColumnarValue::Scalar(scalar_variant), ColumnarValue::Array(paths)) => {
                 let ScalarValue::Struct(variant_array) = scalar_variant else {
@@ -142,7 +141,9 @@ impl ScalarUDFImpl for VariantContainsUdf {
                     })
                     .collect::<Result<Vec<_>>>()?;
 
-                Ok(ColumnarValue::Array(Arc::new(BooleanArray::from(values)) as ArrayRef))
+                Ok(ColumnarValue::Array(
+                    Arc::new(BooleanArray::from(values)) as ArrayRef
+                ))
             }
         }
     }
@@ -247,7 +248,10 @@ mod tests {
         };
 
         let values = values.as_any().downcast_ref::<BooleanArray>().unwrap();
-        assert_eq!(values.into_iter().collect::<Vec<_>>(), vec![Some(true), Some(true), None]);
+        assert_eq!(
+            values.into_iter().collect::<Vec<_>>(),
+            vec![Some(true), Some(true), None]
+        );
     }
 
     #[test]
@@ -274,7 +278,9 @@ mod tests {
         };
 
         let values = values.as_any().downcast_ref::<BooleanArray>().unwrap();
-        assert_eq!(values.into_iter().collect::<Vec<_>>(), vec![Some(true), Some(false)]);
+        assert_eq!(
+            values.into_iter().collect::<Vec<_>>(),
+            vec![Some(true), Some(false)]
+        );
     }
-
 }
