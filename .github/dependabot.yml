@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: weekly
+    target-branch: main
+    labels: [auto-dependencies]
+    groups:
+      parquet-variant:
+        applies-to: version-updates
+        patterns:
+          - "parquet-variant*"
