@@ -38,10 +38,6 @@ fn variant_length(variant: Option<Variant<'_, '_>>) -> Option<u64> {
 }
 
 impl ScalarUDFImpl for VariantLengthUdf {
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
     fn name(&self) -> &str {
         "variant_length"
     }
