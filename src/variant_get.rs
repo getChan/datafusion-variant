@@ -291,7 +291,7 @@ type hint or cast target to retain a Variant result.",
     argument(name = "value", description = "Variant expression to extract from."),
     argument(
         name = "path",
-        description = r#"String expression using Spark-style paths such as `$.a.b[0]`; `$` selects the root. Use `$["a.b"]` for a literal key containing a dot and `$["$"]` for a field named `$`. Existing rootless paths such as `a.b[0]` and `["a.b"]` remain supported for compatibility. An empty string or SQL NULL also selects the root. Rooted quoted keys follow Spark 4.2 and treat backslashes literally; rootless paths retain Arrow's escaping rules. Paths beginning with `$` now use rooted syntax; quote dollar-prefixed field names in brackets to access them literally."#
+        description = r#"String expression using Spark-style paths such as `$.a.b[0]`; `$` selects the root. Use `$["a.b"]` for a literal key containing a dot and `$["$"]` for a field named `$`. Existing rootless paths such as `a.b[0]` and `["a.b"]` remain supported for compatibility. An empty string or SQL NULL also selects the root. Rootless paths retain Arrow's escaping rules. Paths beginning with `$` now use rooted syntax; quote dollar-prefixed field names in brackets to access them literally."#
     ),
     argument(
         name = "type",

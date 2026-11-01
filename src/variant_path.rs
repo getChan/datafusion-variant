@@ -5,27 +5,21 @@
 use datafusion::common::{Result, exec_datafusion_err};
 use parquet_variant::{VariantPath, VariantPathElement};
 
-/// Parse Spark 4.2 rooted paths and the existing rootless path syntax.
+/// Parse Spark-rooted paths and the existing rootless path syntax.
 pub(crate) fn parse_variant_path(path: &str) -> Result<VariantPath<'_>> {
     // TODO(#142): unify path dialects after deciding compatibility policy (#71, #141).
     // Rootless paths retain Arrow's escaping rules for existing callers.
     if path.starts_with('$') {
-        parse_rooted_path(path, false)
+        parse_rooted_path(path)
     } else {
         Ok(VariantPath::try_from(path)?)
     }
 }
 
-// Deletion follows the newer Spark escape semantics and requires a rooted path.
-pub(crate) fn parse_delete_path(path: &str) -> Result<VariantPath<'_>> {
-    parse_rooted_path(path, true)
-}
-
-// Spark 4.2 retains backslashes; newer Spark decodes quoted escapes.
-// See Spark VariantPathParser:
+// Spark VariantPathParser's default (non-legacy) grammar, adapted from:
 // https://github.com/apache/spark/blob/046f574fce3ffd93925f7bcdd459221fa11a730d/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/variant/variantExpressions.scala
 // Keep Arrow's path representation without delegating Spark escaping to Arrow.
-fn parse_rooted_path(path: &str, decode_escapes: bool) -> Result<VariantPath<'_>> {
+fn parse_rooted_path(path: &str) -> Result<VariantPath<'_>> {
     let invalid = || exec_datafusion_err!("invalid Variant path {path:?}");
     let mut remaining = path.strip_prefix('$').ok_or_else(invalid)?;
     let mut elements = Vec::new();
@@ -43,19 +37,17 @@ fn parse_rooted_path(path: &str, decode_escapes: bool) -> Result<VariantPath<'_>
                 let mut chars = body[1..].char_indices();
                 let end = loop {
                     let (i, c) = chars.next().ok_or_else(invalid)?;
-                    if decode_escapes && c == '\\' {
+                    if c == '\\' {
                         chars.next().ok_or_else(invalid)?;
                     } else if c == quote {
                         break i + 1;
                     }
                 };
                 remaining = body[end + 1..].strip_prefix(']').ok_or_else(invalid)?;
-                let key = &body[1..end];
-                elements.push(if decode_escapes {
-                    VariantPathElement::field(unescape_key(key, quote))
-                } else {
-                    VariantPathElement::field(key)
-                });
+                elements.push(VariantPathElement::field(unescape_key(
+                    &body[1..end],
+                    quote,
+                )));
             } else {
                 let end = body.find(']').ok_or_else(invalid)?;
                 let index = &body[..end];
@@ -144,7 +136,8 @@ mod tests {
             ("$['$']", vec![VariantPathElement::field("$")]),
             ("$['a]b']", vec![VariantPathElement::field("a]b")]),
             ("$['']", vec![VariantPathElement::field("")]),
-            (r"$['\u0061']", vec![VariantPathElement::field(r"\u0061")]),
+            (r"$['\u0061']", vec![VariantPathElement::field("a")]),
+            (r"$['a\'b']", vec![VariantPathElement::field("a'b")]),
         ] {
             assert_eq!(
                 parse_variant_path(text).unwrap().path(),
@@ -152,18 +145,6 @@ mod tests {
                 "{text}"
             );
         }
-    }
-
-    #[test]
-    fn delete_retains_newer_escape_semantics() {
-        assert_eq!(
-            parse_delete_path(r"$['\u0061']").unwrap().path(),
-            &vec![VariantPathElement::field("a")]
-        );
-        assert_eq!(
-            parse_delete_path(r"$['a\'b']").unwrap().path(),
-            &vec![VariantPathElement::field("a'b")]
-        );
     }
 
     #[test]
