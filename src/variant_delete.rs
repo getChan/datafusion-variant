@@ -273,7 +273,7 @@ fn parse_path(path: &str) -> Result<VariantPath<'_>> {
     if !path.starts_with('$') {
         return Err(invalid());
     }
-    let parsed = crate::variant_path::parse_variant_path(path).map_err(|_| invalid())?;
+    let parsed = crate::variant_path::parse_delete_path(path).map_err(|_| invalid())?;
     if parsed.path().is_empty() {
         return Err(invalid());
     }
